@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Auto Flow - DIY",
+  "version": "1.0.0",
+  "description": "Automate bulk video creation on Google Flow AI (Veo 3 & Nano Banana)",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "downloads",
+    "storage",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://labs.google/flow/*",
+    "https://labs.google/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://labs.google/flow/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
