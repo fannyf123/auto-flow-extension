@@ -4,336 +4,223 @@
   <meta charset="UTF-8" />
   <title>Auto Flow DIY</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f0f1a;
-      color: #e0e0e0;
-      min-height: 100vh;
-      padding: 0;
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:'Segoe UI',sans-serif;
+      background:#0f0f1a;
+      color:#e0e0e0;
+      min-height:100vh;
     }
-
-    /* ── Header ── */
-    .header {
-      background: linear-gradient(135deg, #1a0a2e, #16213e);
-      padding: 14px 16px 0;
-      border-bottom: 1px solid #2a2a3e;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+    /* Header */
+    .header{
+      background:linear-gradient(135deg,#1a0a2e,#16213e);
+      padding:12px 14px 0;
+      border-bottom:1px solid #2a2a3e;
+      position:sticky;top:0;z-index:10;
     }
-    .header h1 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #a78bfa;
-      margin-bottom: 10px;
-      letter-spacing: 0.5px;
+    .header h1{font-size:14px;font-weight:700;color:#a78bfa;margin-bottom:8px;}
+    .header h1 span{color:#7c3aed;}
+    /* Tabs */
+    .tabs{display:flex;gap:3px;}
+    .tab-btn{
+      flex:1;padding:6px 4px;border:none;background:transparent;
+      color:#555;font-size:11px;font-weight:700;cursor:pointer;
+      border-bottom:2px solid transparent;transition:all .2s;
+      border-radius:4px 4px 0 0;
     }
-    .header h1 span { color: #7c3aed; }
-
-    /* ── Tab Nav ── */
-    .tabs {
-      display: flex;
-      gap: 4px;
+    .tab-btn:hover{color:#a78bfa;}
+    .tab-btn.active{color:#a78bfa;border-bottom-color:#7c3aed;background:rgba(124,58,237,.08);}
+    /* Content */
+    .content{padding:12px 13px;}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
+    /* Form */
+    label{font-size:10px;color:#777;margin-bottom:3px;display:block;text-transform:uppercase;letter-spacing:.4px;}
+    select,input[type=number],textarea,input[type=text]{
+      width:100%;background:#1a1a2e;border:1px solid #2a2a4a;
+      border-radius:5px;color:#e0e0e0;padding:6px 8px;
+      font-size:12px;margin-bottom:8px;outline:none;transition:border .2s;
     }
-    .tab-btn {
-      flex: 1;
-      padding: 7px 4px;
-      border: none;
-      background: transparent;
-      color: #666;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-      border-radius: 4px 4px 0 0;
+    select:focus,textarea:focus,input:focus{border-color:#7c3aed;}
+    textarea{height:100px;resize:vertical;font-family:inherit;line-height:1.5;}
+    .row{display:flex;gap:7px;}
+    .row>div{flex:1;min-width:0;}
+    /* Buttons */
+    .btn{
+      width:100%;padding:8px;border:none;border-radius:5px;
+      font-size:12px;font-weight:700;cursor:pointer;
+      margin-bottom:6px;transition:opacity .2s,transform .1s;
     }
-    .tab-btn:hover { color: #a78bfa; }
-    .tab-btn.active {
-      color: #a78bfa;
-      border-bottom-color: #7c3aed;
-      background: rgba(124,58,237,0.08);
+    .btn:active{transform:scale(.98);}
+    .btn-primary{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:white;}
+    .btn-danger{background:#7f1d1d;color:#fca5a5;}
+    .btn-ghost{background:#1a1a2e;color:#a78bfa;border:1px solid #3a2a5e;}
+    /* Status */
+    .status-box{
+      background:#0d1117;border:1px solid #2a2a3e;
+      border-radius:5px;padding:8px 10px;margin-top:6px;min-height:48px;
     }
-
-    /* ── Content ── */
-    .content { padding: 14px 14px; }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    /* ── Form Elements ── */
-    label {
-      font-size: 11px;
-      color: #888;
-      margin-bottom: 3px;
-      display: block;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
+    .status-text{font-size:12px;color:#86efac;font-weight:600;}
+    .status-detail{font-size:10px;color:#64748b;margin-top:2px;word-break:break-all;}
+    /* Progress */
+    .prog-wrap{background:#1a1a2e;border-radius:3px;height:4px;margin:7px 0 2px;overflow:hidden;}
+    .prog-bar{height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);width:0%;transition:width .4s ease;border-radius:3px;}
+    .prog-label{font-size:10px;color:#4a4a6a;text-align:right;}
+    /* Log */
+    .log-area{
+      background:#0d1117;border:1px solid #2a2a3e;
+      border-radius:5px;padding:5px 7px;font-size:10px;
+      color:#64748b;height:72px;overflow-y:auto;font-family:monospace;
+      margin-top:4px;
     }
-    select, input[type=number], textarea, input[type=text] {
-      width: 100%;
-      background: #1a1a2e;
-      border: 1px solid #2a2a4a;
-      border-radius: 6px;
-      color: #e0e0e0;
-      padding: 7px 9px;
-      font-size: 12px;
-      margin-bottom: 10px;
-      transition: border 0.2s;
-      outline: none;
+    .log-area p{margin:1px 0;}
+    .log-ok{color:#86efac;}.log-err{color:#fca5a5;}.log-info{color:#93c5fd;}
+    hr{border:none;border-top:1px solid #1e1e3a;margin:8px 0;}
+    .section{font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;}
+    .badge{
+      display:inline-block;background:#2d1b69;color:#a78bfa;
+      font-size:9px;padding:1px 5px;border-radius:8px;margin-left:5px;
     }
-    select:focus, textarea:focus, input:focus {
-      border-color: #7c3aed;
-    }
-    textarea {
-      height: 110px;
-      resize: vertical;
-      font-family: inherit;
-      line-height: 1.5;
-    }
-
-    .row { display: flex; gap: 8px; }
-    .row > div { flex: 1; min-width: 0; }
-
-    /* ── Buttons ── */
-    .btn {
-      width: 100%;
-      padding: 8px;
-      border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-bottom: 6px;
-      transition: opacity 0.2s, transform 0.1s;
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary { background: linear-gradient(135deg, #7c3aed, #5b21b6); color: white; }
-    .btn-primary:hover { opacity: 0.9; }
-    .btn-danger { background: #7f1d1d; color: #fca5a5; }
-    .btn-ghost {
-      background: #1a1a2e;
-      color: #a78bfa;
-      border: 1px solid #3a2a5e;
-    }
-
-    /* ── Status Box ── */
-    .status-box {
-      background: #0d1117;
-      border: 1px solid #2a2a3e;
-      border-radius: 6px;
-      padding: 8px 10px;
-      margin-top: 6px;
-      min-height: 52px;
-    }
-    .status-text {
-      font-size: 12px;
-      color: #86efac;
-      font-weight: 600;
-    }
-    .status-detail {
-      font-size: 11px;
-      color: #64748b;
-      margin-top: 3px;
-      word-break: break-all;
-    }
-
-    /* ── Progress Bar ── */
-    .progress-wrap {
-      background: #1a1a2e;
-      border-radius: 4px;
-      height: 4px;
-      margin: 8px 0 4px;
-      overflow: hidden;
-    }
-    .progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, #7c3aed, #a78bfa);
-      width: 0%;
-      transition: width 0.4s ease;
-      border-radius: 4px;
-    }
-    .progress-label {
-      font-size: 10px;
-      color: #4a4a6a;
-      text-align: right;
-    }
-
-    /* ── Divider ── */
-    hr { border: none; border-top: 1px solid #1e1e3a; margin: 10px 0; }
-
-    /* ── Task Counter badge ── */
-    .badge {
-      display: inline-block;
-      background: #2d1b69;
-      color: #a78bfa;
-      font-size: 10px;
-      padding: 1px 6px;
-      border-radius: 10px;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
-
-    /* ── Log area (image mode) ── */
-    .log-area {
-      background: #0d1117;
-      border: 1px solid #2a2a3e;
-      border-radius: 6px;
-      padding: 6px 8px;
-      font-size: 10px;
-      color: #64748b;
-      height: 80px;
-      overflow-y: auto;
-      font-family: monospace;
-      margin-top: 4px;
-    }
-    .log-area p { margin: 1px 0; }
-    .log-ok { color: #86efac; }
-    .log-err { color: #fca5a5; }
-    .log-info { color: #93c5fd; }
-
-    /* ── Section title ── */
-    .section-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: #7c3aed;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 8px;
+    /* Info box */
+    .info-box{
+      background:#0d1b2a;border:1px solid #1e3a5f;border-radius:5px;
+      padding:7px 9px;font-size:10px;color:#60a5fa;margin-bottom:8px;
+      line-height:1.5;
     }
   </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <div class="header">
-    <h1>⚡ Auto Flow <span>DIY</span></h1>
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="video">🎬 Text to Video</button>
-      <button class="tab-btn" data-tab="image">🖼️ Text to Image</button>
+<div class="header">
+  <h1>⚡ Auto Flow <span>DIY</span></h1>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="image">🖼️ Text to Image</button>
+    <button class="tab-btn" data-tab="video">🎬 Text to Video</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- ════════ TAB IMAGE ════════ -->
+  <div class="tab-panel active" id="tab-image">
+
+    <div class="info-box">
+      ⚠️ Pastikan halaman <b>labs.google/flow</b> sudah terbuka di tab aktif sebelum start.
+    </div>
+
+    <div class="section">Prompts</div>
+    <label>Daftar Prompt <span class="badge" id="i-count">0</span></label>
+    <textarea id="i-prompts" placeholder="A beautiful sunset over Mount Bromo, photorealistic&#10;Japanese street food market at night, cinematic&#10;Underwater coral reef with tropical fish, vibrant"></textarea>
+    <button class="btn btn-ghost" id="i-btnLoad">📂 Load dari .txt</button>
+    <input type="file" id="i-fileInput" accept=".txt" style="display:none"/>
+
+    <hr/>
+    <div class="section">Pengaturan Model</div>
+
+    <div class="row">
+      <div>
+        <label>Model</label>
+        <select id="i-model">
+          <option value="Nano Banana 2">🍌 Nano Banana 2</option>
+          <option value="Nano Banana Pro">🍌 Nano Banana Pro</option>
+          <option value="Imagen 4">Imagen 4</option>
+        </select>
+      </div>
+      <div>
+        <label>Orientasi</label>
+        <select id="i-orientation">
+          <option value="Landscape">🖼 Landscape</option>
+          <option value="Portrait">📱 Portrait</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Jumlah per prompt</label>
+        <select id="i-count-gen">
+          <option value="x1">x1 (1 gambar)</option>
+          <option value="x2">x2 (2 gambar)</option>
+          <option value="x3">x3 (3 gambar)</option>
+          <option value="x4">x4 (4 gambar)</option>
+        </select>
+      </div>
+      <div>
+        <label>Download Resolusi</label>
+        <select id="i-resolution">
+          <option value="4K">4K (Terbaik)</option>
+          <option value="2K">2K</option>
+          <option value="1K">1K</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Mulai task ke-</label>
+        <input type="number" id="i-startFrom" value="1" min="1"/>
+      </div>
+      <div>
+        <label>Wait time (detik)</label>
+        <input type="number" id="i-waitTime" value="25" min="10"/>
+      </div>
+    </div>
+
+    <hr/>
+    <button class="btn btn-primary" id="i-btnStart">▶ Start Automation</button>
+    <button class="btn btn-danger"  id="i-btnStop">⏹ Stop</button>
+
+    <div class="status-box">
+      <div class="status-text" id="i-status">Idle — buka labs.google/flow dulu</div>
+      <div class="prog-wrap"><div class="prog-bar" id="i-prog-bar"></div></div>
+      <div class="prog-label" id="i-prog-label"></div>
+      <div class="status-detail" id="i-detail"></div>
+    </div>
+
+    <label style="margin-top:8px">Log</label>
+    <div class="log-area" id="i-log"></div>
+  </div>
+
+  <!-- ════════ TAB VIDEO ════════ -->
+  <div class="tab-panel" id="tab-video">
+
+    <div class="info-box">
+      ⚠️ Pastikan halaman <b>labs.google/flow</b> sudah terbuka di tab aktif sebelum start.
+    </div>
+
+    <div class="section">Prompts</div>
+    <label>Daftar Prompt <span class="badge" id="v-count">0</span></label>
+    <textarea id="v-prompts" placeholder="A cinematic shot of ocean waves at sunset&#10;A drone flying over rice fields in Bali"></textarea>
+    <button class="btn btn-ghost" id="v-btnLoad">📂 Load dari .txt</button>
+    <input type="file" id="v-fileInput" accept=".txt" style="display:none"/>
+
+    <hr/>
+    <div class="section">Pengaturan</div>
+
+    <div class="row">
+      <div>
+        <label>Mulai task ke-</label>
+        <input type="number" id="v-startFrom" value="1" min="1"/>
+      </div>
+      <div>
+        <label>Wait time (detik)</label>
+        <input type="number" id="v-waitTime" value="90" min="30"/>
+      </div>
+    </div>
+
+    <hr/>
+    <button class="btn btn-primary" id="v-btnStart">▶ Start Automation</button>
+    <button class="btn btn-danger"  id="v-btnStop">⏹ Stop</button>
+
+    <div class="status-box">
+      <div class="status-text" id="v-status">Idle — buka labs.google/flow dulu</div>
+      <div class="prog-wrap"><div class="prog-bar" id="v-prog-bar"></div></div>
+      <div class="prog-label" id="v-prog-label"></div>
+      <div class="status-detail" id="v-detail"></div>
     </div>
   </div>
 
-  <div class="content">
-
-    <!-- ════════════════════════════════════════ -->
-    <!--          TAB 1: TEXT TO VIDEO            -->
-    <!-- ════════════════════════════════════════ -->
-    <div class="tab-panel active" id="tab-video">
-
-      <div class="section-title">Prompts</div>
-      <label>Daftar Prompt <span class="badge" id="v-count">0</span></label>
-      <textarea id="v-prompts" placeholder="A cinematic shot of ocean waves at sunset&#10;A drone flying over rice fields in Bali&#10;Time-lapse of busy city street at night"></textarea>
-      <button class="btn btn-ghost" id="v-btnLoad">📂 Load dari .txt</button>
-      <input type="file" id="v-fileInput" accept=".txt" style="display:none" />
-
-      <hr />
-      <div class="section-title">Pengaturan</div>
-
-      <div class="row">
-        <div>
-          <label>Model</label>
-          <select id="v-model">
-            <option value="veo3fast">Veo 3.1 Fast</option>
-            <option value="veo3quality">Veo 3.1 Quality</option>
-            <option value="veo2">Veo 2</option>
-          </select>
-        </div>
-        <div>
-          <label>Aspect Ratio</label>
-          <select id="v-ratio">
-            <option value="16:9">16:9 Landscape</option>
-            <option value="9:16">9:16 Portrait</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Mulai task ke-</label>
-          <input type="number" id="v-startFrom" value="1" min="1" />
-        </div>
-        <div>
-          <label>Wait time (detik)</label>
-          <input type="number" id="v-waitTime" value="90" min="30" />
-        </div>
-      </div>
-
-      <hr />
-      <button class="btn btn-primary" id="v-btnStart">▶ Start Automation</button>
-      <button class="btn btn-danger" id="v-btnStop">⏹ Stop</button>
-
-      <div class="status-box">
-        <div class="status-text" id="v-status">Idle — buka labs.google/flow dulu</div>
-        <div class="progress-wrap"><div class="progress-bar" id="v-progress-bar"></div></div>
-        <div class="progress-label" id="v-progress-label"></div>
-        <div class="status-detail" id="v-detail"></div>
-      </div>
-    </div>
-
-    <!-- ════════════════════════════════════════ -->
-    <!--          TAB 2: TEXT TO IMAGE            -->
-    <!-- ════════════════════════════════════════ -->
-    <div class="tab-panel" id="tab-image">
-
-      <div class="section-title">Prompts</div>
-      <label>Daftar Prompt <span class="badge" id="i-count">0</span></label>
-      <textarea id="i-prompts" placeholder="A beautiful sunset over Mount Bromo, photorealistic&#10;Japanese street food market at night, cinematic&#10;Underwater coral reef with tropical fish"></textarea>
-      <button class="btn btn-ghost" id="i-btnLoad">📂 Load dari .txt</button>
-      <input type="file" id="i-fileInput" accept=".txt" style="display:none" />
-
-      <hr />
-      <div class="section-title">Pengaturan</div>
-
-      <div class="row">
-        <div>
-          <label>Model</label>
-          <select id="i-model">
-            <option value="nanoBanana">Nano Banana (Imagen 4)</option>
-            <option value="imagen3">Imagen 3</option>
-          </select>
-        </div>
-        <div>
-          <label>Aspect Ratio</label>
-          <select id="i-ratio">
-            <option value="1:1">1:1 Square</option>
-            <option value="16:9">16:9 Landscape</option>
-            <option value="9:16">9:16 Portrait</option>
-            <option value="4:3">4:3</option>
-            <option value="3:4">3:4</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Mulai task ke-</label>
-          <input type="number" id="i-startFrom" value="1" min="1" />
-        </div>
-        <div>
-          <label>Wait time (detik)</label>
-          <input type="number" id="i-waitTime" value="20" min="5" />
-        </div>
-      </div>
-
-      <hr />
-      <button class="btn btn-primary" id="i-btnStart">▶ Start Automation</button>
-      <button class="btn btn-danger" id="i-btnStop">⏹ Stop</button>
-
-      <div class="status-box">
-        <div class="status-text" id="i-status">Idle — buka labs.google/flow dulu</div>
-        <div class="progress-wrap"><div class="progress-bar" id="i-progress-bar"></div></div>
-        <div class="progress-label" id="i-progress-label"></div>
-        <div class="status-detail" id="i-detail"></div>
-      </div>
-
-      <label style="margin-top:8px">Log</label>
-      <div class="log-area" id="i-log"></div>
-    </div>
-
-  </div><!-- end .content -->
-
-  <script src="sidepanel.js"></script>
+</div>
+<script src="sidepanel.js"></script>
 </body>
 </html>
