@@ -1,124 +1,241 @@
-// ── State ──────────────────────────────────────────────
-let running = false;
-let currentIndex = 0;
-let config = null;
+// ══════════════════════════════════════════════════════
+//  Auto Flow DIY — Content Script v2.0
+//  Runs on: https://labs.google/flow/*
+// ══════════════════════════════════════════════════════
 
-// ── Helper: delay ──────────────────────────────────────
+let videoRunning = false;
+let imageRunning = false;
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const rand  = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-// ── Kirim status ke popup ──────────────────────────────
-function sendStatus(status, detail = '') {
-  chrome.runtime.sendMessage({ type: 'PROGRESS', status, detail });
+// ── Status reporter ────────────────────────────────────
+function reportVideo(status, detail = '', percent = null) {
+  chrome.runtime.sendMessage({ type: 'VIDEO_PROGRESS', status, detail, percent });
+}
+function reportImage(status, detail = '', percent = null, log = '', logType = 'info') {
+  chrome.runtime.sendMessage({ type: 'IMAGE_PROGRESS', status, detail, percent, log, logType });
 }
 
-// ── Cari elemen dengan retry ───────────────────────────
-async function waitForElement(selector, timeout = 15000) {
+// ── Wait for element ───────────────────────────────────
+async function waitForElement(selector, timeout = 20000) {
   const start = Date.now();
   while (Date.now() - start < timeout) {
     const el = document.querySelector(selector);
     if (el) return el;
-    await sleep(500);
+    await sleep(400);
   }
   return null;
 }
 
-// ── Isi prompt ke textarea ─────────────────────────────
+// ── Fill prompt (handles both textarea & contenteditable) ──
 async function fillPrompt(text) {
-  const textarea = await waitForElement(
-    'textarea[placeholder], div[contenteditable="true"]'
-  );
-  if (!textarea) throw new Error('Prompt textarea not found');
+  // Try textarea first
+  let el = document.querySelector('textarea');
 
-  textarea.focus();
+  if (el) {
+    el.focus();
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+    setter.call(el, text);
+    el.dispatchEvent(new Event('input',  { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(400);
+    return;
+  }
 
-  // Trigger React synthetic event
-  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-    window.HTMLTextAreaElement.prototype, 'value'
-  ).set;
-  nativeInputValueSetter.call(textarea, text);
-  textarea.dispatchEvent(new Event('input', { bubbles: true }));
-  textarea.dispatchEvent(new Event('change', { bubbles: true }));
-  await sleep(500);
+  // Try contenteditable div
+  el = document.querySelector('[contenteditable="true"]');
+  if (el) {
+    el.focus();
+    document.execCommand('selectAll', false, null);
+    document.execCommand('insertText', false, text);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    await sleep(400);
+    return;
+  }
+
+  throw new Error('Prompt input tidak ditemukan — pastikan halaman Flow sudah terbuka');
 }
 
-// ── Klik tombol Generate ───────────────────────────────
+// ── Click generate button ──────────────────────────────
 async function clickGenerate() {
-  const buttons = [...document.querySelectorAll('button')];
-  const generateBtn = buttons.find(b =>
-    /generate|create|run/i.test(b.textContent)
-  );
-  if (!generateBtn) throw new Error('Generate button not found');
-  generateBtn.click();
-  await sleep(2000);
+  const allBtns = [...document.querySelectorAll('button')];
+  let btn = allBtns.find(b => /^(generate|create|run|go)$/i.test(b.textContent.trim()));
+  if (!btn) btn = allBtns.find(b => /generate|create/i.test(b.textContent));
+  if (!btn) throw new Error('Tombol generate tidak ditemukan');
+  btn.click();
+  await sleep(rand(1500, 2500));
 }
 
-// ── Tunggu video selesai render ────────────────────────
-async function waitForVideoComplete(waitTime) {
-  sendStatus('⏳ Menunggu render...', `Est. ${waitTime / 1000}s`);
-  await sleep(waitTime);
-  const videos = document.querySelectorAll('video');
-  return videos.length > 0;
+// ── Click image-mode generate button ──────────────────
+async function clickImageGenerate() {
+  const allBtns = [...document.querySelectorAll('button')];
+  // Cari tombol yang berkaitan dengan image generation di Flow
+  let btn = allBtns.find(b => /generate image|create image|generate/i.test(b.textContent.trim()));
+  if (!btn) btn = allBtns.find(b => /generate|create/i.test(b.textContent));
+  if (!btn) throw new Error('Tombol generate image tidak ditemukan');
+  btn.click();
+  await sleep(rand(1500, 2500));
 }
 
-// ── Download video terbaru ─────────────────────────────
-async function downloadLatestVideo(index) {
+// ── Wait for video to appear ───────────────────────────
+async function waitForVideo(waitTime) {
+  const initialCount = document.querySelectorAll('video').length;
+  const deadline = Date.now() + waitTime;
+  while (Date.now() < deadline) {
+    const current = document.querySelectorAll('video').length;
+    if (current > initialCount) return true;
+    await sleep(2000);
+  }
+  return document.querySelectorAll('video').length > 0;
+}
+
+// ── Wait for new image to appear ──────────────────────
+async function waitForImage(waitTime) {
+  const initialCount = document.querySelectorAll('img[src*="blob"], img[src*="data:"]').length;
+  const deadline = Date.now() + waitTime;
+  while (Date.now() < deadline) {
+    const current = document.querySelectorAll('img[src*="blob"], img[src*="data:"]').length;
+    if (current > initialCount) return true;
+    await sleep(1000);
+  }
+  return false;
+}
+
+// ── Download latest video ──────────────────────────────
+async function downloadVideo(index) {
   const videos = [...document.querySelectorAll('video')];
   if (!videos.length) return;
-
-  const lastVideo = videos[videos.length - 1];
-  const src = lastVideo.src || lastVideo.currentSrc;
-  if (!src) return;
-
+  const src = videos[videos.length - 1].src || videos[videos.length - 1].currentSrc;
+  if (!src || src.startsWith('blob:')) {
+    console.warn('[AutoFlow] Video src adalah blob URL, download manual diperlukan');
+    return;
+  }
   chrome.runtime.sendMessage({
     type: 'DOWNLOAD',
     url: src,
-    filename: `auto-flow-${String(index + 1).padStart(4, '0')}.mp4`
+    filename: `video-${String(index + 1).padStart(4, '0')}.mp4`
   });
   await sleep(1000);
 }
 
-// ── Main Loop ──────────────────────────────────────────
-async function runAutomation() {
+// ── Download latest image ──────────────────────────────
+async function downloadImage(index) {
+  // Cari tombol download jika ada
+  const allBtns = [...document.querySelectorAll('button, a')];
+  const dlBtn = allBtns.find(b => /download/i.test(b.textContent) || /download/i.test(b.getAttribute('aria-label') || ''));
+  if (dlBtn) {
+    dlBtn.click();
+    await sleep(1000);
+    return;
+  }
+
+  // Fallback: cari img terbaru dan download via URL
+  const imgs = [...document.querySelectorAll('img')];
+  const validImg = imgs.reverse().find(img =>
+    img.src &&
+    !img.src.includes('icon') &&
+    !img.src.includes('logo') &&
+    img.naturalWidth > 100
+  );
+  if (!validImg) return;
+
+  chrome.runtime.sendMessage({
+    type: 'DOWNLOAD',
+    url: validImg.src,
+    filename: `image-${String(index + 1).padStart(4, '0')}.png`
+  });
+  await sleep(1000);
+}
+
+// ══════════════════════════════════
+//  MAIN LOOP — VIDEO
+// ══════════════════════════════════
+async function runVideo(config) {
   const { prompts, startFrom, waitTime } = config;
-  currentIndex = startFrom;
+  let i = startFrom;
+  videoRunning = true;
 
-  sendStatus(`🚀 Starting dari task ${startFrom + 1}/${prompts.length}`);
-
-  while (running && currentIndex < prompts.length) {
-    const prompt = prompts[currentIndex];
-    sendStatus(
-      `✏️ Task ${currentIndex + 1}/${prompts.length}`,
-      `Prompt: "${prompt.substring(0, 40)}..."`
+  while (videoRunning && i < prompts.length) {
+    const pct = Math.round((i / prompts.length) * 100);
+    reportVideo(
+      `✏️ Task ${i + 1}/${prompts.length}`,
+      `"${prompts[i].substring(0, 50)}..."`,
+      pct
     );
 
     try {
-      await fillPrompt(prompt);
+      await fillPrompt(prompts[i]);
       await clickGenerate();
-      await waitForVideoComplete(waitTime);
-      await downloadLatestVideo(currentIndex);
-      sendStatus(`✅ Task ${currentIndex + 1} selesai!`);
+      reportVideo(`⏳ Rendering...`, `Est. ${waitTime / 1000}s`, pct);
+      await waitForVideo(waitTime);
+      await downloadVideo(i);
+      reportVideo(`✅ Task ${i + 1} selesai!`, '', pct);
     } catch (err) {
-      sendStatus(`❌ Error task ${currentIndex + 1}: ${err.message}`);
-      console.error('[AutoFlow]', err);
+      reportVideo(`❌ Error task ${i + 1}`, err.message, pct);
+      console.error('[AutoFlow Video]', err);
     }
 
-    currentIndex++;
-    await sleep(2000);
+    i++;
+    await sleep(rand(2000, 3500));
   }
 
-  if (running) sendStatus('🎉 Semua task selesai!');
+  if (videoRunning) reportVideo('🎉 Semua task selesai!', '', 100);
+  videoRunning = false;
+}
+
+// ══════════════════════════════════
+//  MAIN LOOP — IMAGE
+// ══════════════════════════════════
+async function runImage(config) {
+  const { prompts, startFrom, waitTime } = config;
+  let i = startFrom;
+  imageRunning = true;
+
+  while (imageRunning && i < prompts.length) {
+    const pct = Math.round((i / prompts.length) * 100);
+    reportImage(
+      `🖼️ Task ${i + 1}/${prompts.length}`,
+      `"${prompts[i].substring(0, 50)}"`,
+      pct,
+      `Task ${i + 1}: ${prompts[i].substring(0, 40)}...`,
+      'info'
+    );
+
+    try {
+      await fillPrompt(prompts[i]);
+      await clickImageGenerate();
+      reportImage(`⏳ Generating image...`, `Est. ${waitTime / 1000}s`, pct);
+      await waitForImage(waitTime);
+      await downloadImage(i);
+      reportImage(
+        `✅ Task ${i + 1} selesai!`, '', pct,
+        `✅ Image ${i + 1} berhasil di-generate`, 'ok'
+      );
+    } catch (err) {
+      reportImage(
+        `❌ Error task ${i + 1}`, err.message, pct,
+        `❌ Error task ${i + 1}: ${err.message}`, 'err'
+      );
+      console.error('[AutoFlow Image]', err);
+    }
+
+    i++;
+    await sleep(rand(1500, 2500));
+  }
+
+  if (imageRunning) {
+    reportImage('🎉 Semua image selesai!', '', 100, '🎉 All done!', 'ok');
+  }
+  imageRunning = false;
 }
 
 // ── Message Listener ───────────────────────────────────
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.action === 'START') {
-    running = true;
-    config = msg.config;
-    runAutomation();
-    sendResponse({ ok: true });
-  } else if (msg.action === 'STOP') {
-    running = false;
-    sendResponse({ ok: true });
-  }
+  if (msg.action === 'START')       { runVideo(msg.config); }
+  if (msg.action === 'STOP')        { videoRunning = false; }
+  if (msg.action === 'START_IMAGE') { runImage(msg.config); }
+  if (msg.action === 'STOP_IMAGE')  { imageRunning = false; }
+  sendResponse({ ok: true });
   return true;
 });

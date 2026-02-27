@@ -1,21 +1,24 @@
 {
   "manifest_version": 3,
-  "name": "Auto Flow - DIY",
-  "version": "1.0.0",
-  "description": "Automate bulk video creation on Google Flow AI (Veo 3 & Nano Banana)",
+  "name": "Auto Flow DIY",
+  "version": "2.0.0",
+  "description": "Side Panel automation for Google Flow AI — Text to Video & Text to Image (Nano Banana)",
   "permissions": [
     "activeTab",
     "scripting",
     "downloads",
     "storage",
-    "alarms"
+    "sidePanel",
+    "tabs"
   ],
   "host_permissions": [
-    "https://labs.google/flow/*",
     "https://labs.google/*"
   ],
   "action": {
-    "default_popup": "popup.html"
+    "default_title": "Open Auto Flow"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
   "content_scripts": [
     {

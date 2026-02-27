@@ -1,117 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Auto Flow DIY</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      width: 360px;
-      background: #0f0f1a;
-      color: #e0e0e0;
-      padding: 16px;
-    }
-    h2 {
-      color: #a78bfa;
-      margin-bottom: 12px;
-      font-size: 16px;
-      text-align: center;
-    }
-    label { font-size: 12px; color: #aaa; margin-bottom: 4px; display: block; }
-    select, input[type=number], textarea {
-      width: 100%;
-      background: #1e1e2e;
-      border: 1px solid #333;
-      border-radius: 6px;
-      color: #e0e0e0;
-      padding: 6px 8px;
-      font-size: 13px;
-      margin-bottom: 10px;
-    }
-    textarea { height: 100px; resize: vertical; }
-    .row { display: flex; gap: 8px; }
-    .row > div { flex: 1; }
-    button {
-      width: 100%;
-      padding: 8px;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-bottom: 6px;
-    }
-    #btnStart { background: #7c3aed; color: white; }
-    #btnStop  { background: #dc2626; color: white; }
-    #btnLoad  { background: #1e1e2e; color: #a78bfa; border: 1px solid #7c3aed; }
-    #status {
-      font-size: 12px;
-      color: #86efac;
-      min-height: 16px;
-      text-align: center;
-      margin-top: 4px;
-    }
-    #progress {
-      font-size: 11px;
-      color: #94a3b8;
-      text-align: center;
-    }
-    hr { border-color: #333; margin: 10px 0; }
-  </style>
+<html>
+<head><meta charset="UTF-8"><title>Auto Flow</title>
+<style>
+body{
+  font-family:'Segoe UI',sans-serif;
+  width:220px;
+  background:#0f0f1a;
+  color:#e0e0e0;
+  padding:16px;
+  text-align:center;
+}
+h3{color:#a78bfa;margin-bottom:8px;font-size:14px;}
+p{font-size:11px;color:#64748b;line-height:1.5;margin-bottom:12px;}
+.btn{
+  width:100%;
+  padding:9px;
+  background:linear-gradient(135deg,#7c3aed,#5b21b6);
+  color:white;
+  border:none;
+  border-radius:6px;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.btn:hover{opacity:0.9;}
+</style>
 </head>
 <body>
-  <h2>⚡ Auto Flow DIY</h2>
-
-  <!-- Mode -->
-  <label>Mode</label>
-  <select id="mode">
-    <option value="text2video">Text → Video</option>
-    <option value="image2video">Image → Video (coming soon)</option>
-  </select>
-
-  <!-- Prompts -->
-  <label>Prompts (satu baris = satu task)</label>
-  <textarea id="prompts" placeholder="A cinematic shot of...&#10;A drone flying over..."></textarea>
-  <button id="btnLoad">📂 Load dari .txt</button>
-  <input type="file" id="fileInput" accept=".txt" style="display:none" />
-
-  <!-- Settings -->
-  <div class="row">
-    <div>
-      <label>Aspect Ratio</label>
-      <select id="ratio">
-        <option value="16:9">16:9</option>
-        <option value="9:16">9:16</option>
-      </select>
-    </div>
-    <div>
-      <label>Model</label>
-      <select id="model">
-        <option value="veo3fast">Veo 3.1 Fast</option>
-        <option value="veo3quality">Veo 3.1 Quality</option>
-        <option value="veo2">Veo 2</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>Mulai dari task ke-</label>
-      <input type="number" id="startFrom" value="1" min="1" />
-    </div>
-    <div>
-      <label>Wait time (detik)</label>
-      <input type="number" id="waitTime" value="90" min="30" />
-    </div>
-  </div>
-
-  <hr />
-  <button id="btnStart">▶ Start Automation</button>
-  <button id="btnStop">⏹ Stop</button>
-  <div id="status">Idle</div>
-  <div id="progress"></div>
-
+  <h3>⚡ Auto Flow DIY</h3>
+  <p>Klik tombol di bawah untuk membuka Side Panel</p>
+  <button class="btn" id="openPanel">🔲 Buka Side Panel</button>
   <script src="popup.js"></script>
 </body>
 </html>
