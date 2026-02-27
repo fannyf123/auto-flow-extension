@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Auto Flow DIY",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Side Panel automation for Google Flow AI — Text to Video & Text to Image (Nano Banana)",
   "permissions": [
     "activeTab",
@@ -15,7 +15,7 @@
     "https://labs.google/*"
   ],
   "action": {
-    "default_title": "Open Auto Flow"
+    "default_title": "Open Auto Flow Panel"
   },
   "side_panel": {
     "default_path": "sidepanel.html"

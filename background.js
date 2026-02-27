@@ -1,7 +1,7 @@
-// Buka side panel saat icon extension diklik
-chrome.action.onClicked.addListener(tab => {
-  chrome.sidePanel.open({ tabId: tab.id });
-});
+// Set side panel behavior: buka panel saat icon diklik (tanpa popup)
+chrome.sidePanel
+  .setPanelBehavior({ openPanelOnActionClick: true })
+  .catch(err => console.error('[AutoFlow] setPanelBehavior error:', err));
 
 // Handle download request dari content script
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
